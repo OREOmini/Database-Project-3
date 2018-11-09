@@ -1,1 +1,2 @@
+# You need to set DB_SETTING class by yourself.
 ./src/DB_SETTING.java
