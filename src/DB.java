@@ -32,11 +32,12 @@ public class DB {
 //}
     public static void main(String[] args) {
         Connection con;
-        String driver="com.mysql.cj.jdbc.Driver";
+        DB_SETTING setting = new DB_SETTING();
+        String driver = setting.DRIVER;
         //这里我的数据库是qcl
-        String url="jdbc:mysql://localhost:3306/project2-moviedb?serverTimezone=UTC";
-        String user="root";
-        String password="wang960415";
+        String url = setting.URL;
+        String user = setting.USER;
+        String password = setting.PASSWORD;
         try {
             Class.forName(driver);
             con = DriverManager.getConnection(url, user, password);
