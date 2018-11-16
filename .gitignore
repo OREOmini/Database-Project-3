@@ -1,2 +1,6 @@
+<<<<<<< HEAD
 DB_SETTING.java
+=======
+# You need to set DB_SETTING class by yourself.
+>>>>>>> 37eba5c75a213bebb663224a92f5095da67b20b4
 ./src/DB_SETTING.java
