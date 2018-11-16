@@ -13,39 +13,67 @@ import java.util.Scanner;
  * 数据库连接
  */
 public class DB {
-//    public static void main( String[ ] args )
-//
-//    {
-//
-//        while (true) {Scanner sc = new Scanner( System.in );
-//        System.out.print( "Please enter a string : " );
-//
-//        System.out.print( "Your input is :" + sc.next( ) );
-//    }
-//
-//
-//
-//    }
-//
-//
-//
-//}
+    // CONSTANT VARIABLE
+    private static final DB_SETTING setting = new DB_SETTING();
+    private static final String DRIVER = setting.DRIVER;
+    private static final String URL = setting.URL;
+    private static final String USER = setting.USER;
+    private static final String PASSWORD = setting.PASSWORD;
+
+
+    private Connection  con;    // connect to database
+    private String      username;   // store username, in order to retrieve data from
+                                // database in the future
+
+
+
+
+    public void LoginMenu() {
+
+    }
+    public void StudentMenu() {
+
+    }
+    public void StudentNextOperation() {
+
+    }
+    public void TranscriptShow() {
+
+    }
+    public void TranscriptNextOperation() {
+
+    }
+    // the following method need stored procedures.
+    public void Enroll() {
+
+    }
+    // the following method need stored procedures and triggers.
+    public void WithDraw() {
+
+    }
+    public void PersonalDetail() {
+
+    }
+
+
+    public void ShowCurrentTime() {
+
+    }
     public static void main(String[] args) {
+        DB db = new DB();
+
+
         Connection con;
         DB_SETTING setting = new DB_SETTING();
-        String driver = setting.DRIVER;
-        //这里我的数据库是qcl
-        String url = setting.URL;
-        String user = setting.USER;
-        String password = setting.PASSWORD;
+
         try {
-            Class.forName(driver);
-            con = DriverManager.getConnection(url, user, password);
+            Class.forName(DRIVER);
+            con = DriverManager.getConnection(URL, USER, PASSWORD);
             if (!con.isClosed()) {
-                System.out.println("数据库连接成功");
+                System.out.println("Connection Success...");
             }
             Statement statement = con.createStatement();
-            String sql = "select * from appeared_in;";//我的表格叫home
+            String sql = "select * from faculty;";//我的表格叫home
             ResultSet resultSet = statement.executeQuery(sql);
 
 
@@ -54,22 +82,23 @@ public class DB {
             int i = 0;
 
             while (resultSet.next()) {
-                name = resultSet.getString("star");
+                name = resultSet.getString("id");
                 stars[i][0] = name;
-                movie = resultSet.getString("movie");
-                stars[i++][1] = movie;
+                movie = resultSet.getString("name");
+                stars[i][1] = movie;
 //                System.out.println("姓名：" + name);
+                i++;
             }
-            String[] t = {"star", "movie"};
+            String[] t = {"id", "name"};
             System.out.println(new TextTable(t, stars));
             resultSet.close();
             con.close();
         } catch (ClassNotFoundException e) {
-            System.out.println("数据库驱动没有安装");
+            System.out.println("Drive not found, please check...");
 
         } catch (SQLException e) {
             System.out.println(e);
-            System.out.println("数据库连接失败");
+            System.out.println("Fail to connect to database...");
         }
     }
 }
