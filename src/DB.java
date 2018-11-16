@@ -45,7 +45,7 @@ public class DB {
                 System.out.println("数据库连接成功");
             }
             Statement statement = con.createStatement();
-            String sql = "select * from appeared_in;";//我的表格叫home
+            String sql = "select * from classroom;";//我的表格叫home
             ResultSet resultSet = statement.executeQuery(sql);
 
 
@@ -54,13 +54,13 @@ public class DB {
             int i = 0;
 
             while (resultSet.next()) {
-                name = resultSet.getString("star");
+                name = resultSet.getString("ClassroomId");
                 stars[i][0] = name;
-                movie = resultSet.getString("movie");
+                movie = resultSet.getString("Type");
                 stars[i++][1] = movie;
 //                System.out.println("姓名：" + name);
             }
-            String[] t = {"star", "movie"};
+            String[] t = {"id", "type"};
             System.out.println(new TextTable(t, stars));
             resultSet.close();
             con.close();
