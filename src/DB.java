@@ -299,6 +299,8 @@ public class DB {
 
     public void Enroll(String courseCode) {
         // TODO: enroll constrain
+        String query = "CALL enrollCheck("+studentID+","+courseCode+","+year+","+quarter+")";
+
     }
 
     public void ShowOfferedEnrollCourses() {
@@ -311,7 +313,7 @@ public class DB {
                 "(SELECT t.UoSCode, t.Semester, t.Year \n" +
                 "FROM transcript t \n" +
                 "WHERE t.Studid = \"" + studentID + "\" and l.UoSCode = t.UoSCode and" +
-                " l.Semester = t.Semester and l.Year = t.Year)";
+                " l.Semester = t.Semester and l.Year >= +'"+year+"')";
         try {
             Class.forName(DRIVER);
             if (con.isClosed()) {
