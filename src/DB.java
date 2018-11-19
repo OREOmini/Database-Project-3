@@ -121,7 +121,7 @@ public class DB {
 
 
             while (resultSet.next()) {
-                String name = resultSet.getString("name");
+                String name = resultSet.getString("id");
                 String psw = resultSet.getString("password");
 //                System.out.printf("usr = %s, pswd = %s", name, psw);
                 if (name.equals(username) && password.equals(psw)) {
@@ -182,10 +182,129 @@ public class DB {
 
     }
     public void TranscriptShow() {
+        // same as studentmenu but without year and quarter.
+        String uoSCode, courseYear, courseSemester, grade;
+        String getTranscriptSql =   "SELECT Year,Semester,UoSCode,Grade FROM transcript " +
+                "where StudId =\"" + this.studentID +"\"";
+        List<List<String>> list = new ArrayList<>();
+        try {
+            Class.forName(DRIVER);
+            if (con.isClosed()) {
+                System.out.println("Connection is closed...");
+            }
+            Statement statement = con.createStatement();
+            ResultSet resultSet = statement.executeQuery(getTranscriptSql);
 
+
+            while (resultSet.next()) {
+                uoSCode = resultSet.getString("UoSCode");
+                courseYear = resultSet.getString("Year");
+                courseSemester = resultSet.getString("Semester");
+                grade = resultSet.getString("Grade");
+
+                List<String> temp = new ArrayList<>();
+                temp.add(uoSCode);
+                temp.add(courseYear);
+                temp.add(courseSemester);
+                temp.add(grade);
+                list.add(temp);
+            }
+        } catch (ClassNotFoundException e) {
+            System.out.println("Drive not found, please check...");
+        } catch (SQLException e) {
+            System.out.println(e);
+            System.out.println("Fail to connect to database...");
+        }
+        String[] head = {"UoSCode", "Year", "Semester", "Grade"};
+        showTable(list, head);
     }
-    public void TranscriptNextOperation() {
+    public void ShowCourseDetail(String courseNum) {
+        List<String> list = new ArrayList<>();
+        String title, courseYear, courseQuarter, enrolledStuNum, maxEnroll, lecturer, grade;
+        list.add(courseNum);
+        try {
+            Class.forName(DRIVER);
+            if (con.isClosed()) {
+                System.out.println("Connection is closed...");
+            }
+            Statement statement = con.createStatement();
 
+            // ------- title ------
+            ResultSet resultSet = statement.executeQuery("SELECT UoSName " +
+                    "FROM unitofstudy " +
+                    "WHERE UoSCode=\""+courseNum+"\"");
+            title = resultSet.next() ? resultSet.getString("UoSName") : null;
+            list.add(title);
+
+            // ------ courseYear ------
+            resultSet = statement.executeQuery("SELECT Year " +
+                    "FROM transcript " +
+                    "WHERE UoSCode=\"" + courseNum + "\"" + " and StudId=\"" + studentID + "\"");
+            courseYear = resultSet.next() ? resultSet.getString("year") : null;
+            list.add(courseYear);
+
+            // ------ courseQuarter ------
+            resultSet = statement.executeQuery("SELECT Semester " +
+                    "FROM transcript " +
+                    "WHERE UoSCode=\"" + courseNum + "\"" + " and StudId=\"" + studentID + "\"");
+            courseQuarter = resultSet.next() ? resultSet.getString("semester") : null;
+            list.add(courseQuarter);
+
+            // ------ enrolled student number ------
+            resultSet = statement.executeQuery("SELECT Enrollment " +
+                    "FROM uosoffering " +
+                    "WHERE UoSCode=\"" + courseNum + "\"" +
+                    " and year=\"" + courseYear + "\""+ " and Semester=\"" + courseQuarter + "\"");
+            enrolledStuNum = resultSet.next() ? resultSet.getString("Enrollment") : null;
+            list.add(enrolledStuNum);
+
+            // ------ max enrolled student number ------
+            resultSet = statement.executeQuery("SELECT MaxEnrollment " +
+                    "FROM uosoffering " +
+                    "WHERE UoSCode=\"" + courseNum + "\"" +
+                    " and year=\"" + courseYear + "\""+ " and Semester=\"" + courseQuarter + "\"");
+            maxEnroll = resultSet.next() ? resultSet.getString("MaxEnrollment") : null;
+            list.add(maxEnroll);
+
+            // ------ lecturer ------
+            resultSet = statement.executeQuery("SELECT Name " +
+                    "FROM faculty " +
+                    "WHERE Id in (select InstructorId " +
+                        "from uosoffering where UoSCode=\"" + courseNum + "\"" +
+                        " and year=\"" + courseYear + "\""+ " and Semester=\"" + courseQuarter + "\")");
+            lecturer = resultSet.next() ? resultSet.getString("Name") : null;
+            list.add(lecturer);
+
+            // ------ grade ------
+            resultSet = statement.executeQuery("SELECT Grade " +
+                    "FROM transcript " +
+                    "WHERE UoSCode=\"" + courseNum + "\"" + " and StudId=\"" + studentID + "\"");
+            grade = resultSet.next() ? resultSet.getString("Grade") : null;
+            list.add(grade);
+
+            List<List<String>> res = new ArrayList<>();
+            res.add(list);
+            String[] head = {"Course Code", "Title", "Year", "Quarter", "Enrolled Number",
+                    "Maximum Enrollment", "Lecturer", "Grade"};
+
+            showTable(res, head);
+
+
+
+
+//            while (resultSet.next()) {
+//                String coursename = resultSet.getString("UoSName");
+////                System.out.println(coursename);
+//                List<String> temp = new ArrayList<>();
+//                temp.add(coursename);
+//                list.add(temp);
+//            }
+        } catch (ClassNotFoundException e) {
+            System.out.println("Drive not found, please check...");
+        } catch (SQLException e) {
+            System.out.println(e);
+            System.out.println("Fail to connect to database...");
+        }
     }
     // the following method need stored procedures.
     public void Enroll() {
@@ -243,7 +362,7 @@ public class DB {
                     String userName = sc.nextLine();
                     System.out.print("Please enter your password：");
                     String password = sc.nextLine();
-                    System.out.println(userName + password);
+//                    System.out.println(userName + password);
 
                     if (db.LoginMenu(userName, password)) {
                         state = State.STUDENTMENU;
@@ -279,6 +398,18 @@ public class DB {
                 case ENROLL:
                 case WITHDRAW:
                 case TRANSCRIPT:
+                    db.TranscriptShow();
+                    System.out.print("Please enter the UoSCode to view the detail/ Enter 'q' to go back: ");
+                    String courseCode = "";
+                    courseCode = sc.nextLine();
+                    while (!courseCode.equals("q")) {
+                        System.out.println("Now showing the detail of course " + courseCode);
+                        db.ShowCourseDetail(courseCode);
+                        System.out.print("Please enter the UoSCode to view the detail/ Enter 'q' to go back: ");
+                        courseCode = sc.nextLine();
+                    }
+                    state = State.STUDENTMENU;
+                    break;
                 case PERSONALDETAIL:
                 case PERSONALDETAILS:
                 default:
