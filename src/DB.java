@@ -28,7 +28,7 @@ public class DB {
     private static final String PASSWORD = setting.PASSWORD;
 
     enum State{
-        LOGIN, STUDENTMENU, TRANSCRIPT, PERSONALDETAIL, COURSE, ENROLL, WITHDRAW, PERSONALDETAILS
+        LOGIN, STUDENTMENU, TRANSCRIPT, PERSONALDETAIL, ENROLL, WITHDRAW
     }
 
 
@@ -288,17 +288,6 @@ public class DB {
                     "Maximum Enrollment", "Lecturer", "Grade"};
 
             showTable(res, head);
-
-
-
-
-//            while (resultSet.next()) {
-//                String coursename = resultSet.getString("UoSName");
-////                System.out.println(coursename);
-//                List<String> temp = new ArrayList<>();
-//                temp.add(coursename);
-//                list.add(temp);
-//            }
         } catch (ClassNotFoundException e) {
             System.out.println("Drive not found, please check...");
         } catch (SQLException e) {
@@ -307,17 +296,165 @@ public class DB {
         }
     }
     // the following method need stored procedures.
-    public void Enroll() {
+
+    public void Enroll(String courseCode) {
+        // TODO: enroll constrain
+    }
+
+    public void ShowOfferedEnrollCourses() {
+        List<List<String>> list = new ArrayList<>();
+        String uoSCode, courseSemester, courseYear;
+        String query = "SELECT distinct l.UoSCode as UoSCode, l.Semester as Semester, l.Year as Year\n" +
+                "FROM lecture l\n" +
+                "WHERE \n" +
+                "NOT EXISTS\n" +
+                "(SELECT t.UoSCode, t.Semester, t.Year \n" +
+                "FROM transcript t \n" +
+                "WHERE t.Studid = \"" + studentID + "\" and l.UoSCode = t.UoSCode and" +
+                " l.Semester = t.Semester and l.Year = t.Year)";
+        try {
+            Class.forName(DRIVER);
+            if (con.isClosed()) {
+                System.out.println("Connection is closed...");
+            }
+            Statement statement = con.createStatement();
+            ResultSet resultSet = statement.executeQuery(query);
+
+
+            while (resultSet.next()) {
+                uoSCode = resultSet.getString("UoSCode");
+                courseYear = resultSet.getString("Year");
+                courseSemester = resultSet.getString("Semester");
+
+                List<String> temp = new ArrayList<>();
+                temp.add(uoSCode);
+                temp.add(courseYear);
+                temp.add(courseSemester);
+                list.add(temp);
+            }
+        } catch (ClassNotFoundException e) {
+            System.out.println("Drive not found, please check...");
+        } catch (SQLException e) {
+            System.out.println(e);
+            System.out.println("Fail to connect to database...");
+        }
+        String[] head = {"UoSCode", "Year", "Semester"};
+        showTable(list, head);
 
     }
     // the following method need stored procedures and triggers.
-    public void WithDraw() {
-
+    public void WithDraw(String courseCode) {
+        // TODO: withdraw constrain
     }
-    public void PersonalDetail() {
+    public void ShowWithDrawTable() {
+        List<List<String>> list = new ArrayList<>();
+        String uoSCode, courseSemester, courseYear;
+        String query = "SELECT distinct t.UosCode as UosCode, t.Semester as Semester, t.Year as Year \n" +
+                "FROM transcript t\n" +
+                "WHERE t.Studid = \"" + studentID +"\" and t.Grade is NULL";
+        try {
+            Class.forName(DRIVER);
+            if (con.isClosed()) {
+                System.out.println("Connection is closed...");
+            }
+            Statement statement = con.createStatement();
+            ResultSet resultSet = statement.executeQuery(query);
 
+
+            while (resultSet.next()) {
+                uoSCode = resultSet.getString("UoSCode");
+                courseYear = resultSet.getString("Year");
+                courseSemester = resultSet.getString("Semester");
+
+                List<String> temp = new ArrayList<>();
+                temp.add(uoSCode);
+                temp.add(courseYear);
+                temp.add(courseSemester);
+                list.add(temp);
+            }
+        } catch (ClassNotFoundException e) {
+            System.out.println("Drive not found, please check...");
+        } catch (SQLException e) {
+            System.out.println(e);
+            System.out.println("Fail to connect to database...");
+        }
+        String[] head = {"UoSCode", "Year", "Semester"};
+        showTable(list, head);
     }
+    public void ShowPersonalDetail() {
+        String query = "SELECT * FROM student where Id='" + studentID + "'";
+        List<List<String>> list = new ArrayList<>();
+        try {
+            Class.forName(DRIVER);
+            if (con.isClosed()) {
+                System.out.println("Connection is closed...");
+            }
+            Statement statement = con.createStatement();
+            ResultSet resultSet = statement.executeQuery(query);
+            while (resultSet.next()) {
+                String name = resultSet.getString("name");
+                String psw = resultSet.getString("password");
+                String address = resultSet.getString("address");
+                List<String> temp = new ArrayList<>();
+                temp.add(studentID);
+                temp.add(name);
+                temp.add(psw);
+                temp.add(address);
+                list.add(temp);
+            }
 
+        } catch (ClassNotFoundException e) {
+            System.out.println("Drive not found, please check...");
+        } catch (SQLException e) {
+            System.out.println(e);
+            System.out.println("Fail to connect to database...");
+        }
+        String[] head = {"ID", "Name", "Password", "Address"};
+        showTable(list, head);
+    }
+    public void ShowChangePersonalDetailMenu() {
+        String[][] ops = {{"1", "Change password"}, {"2", "Change Address"}, {"3", "Go back to student menu"}};
+        String[] head = {"Operation", "Code"};
+        System.out.print(new TextTable(head, ops));
+    }
+    public void ChangePassword(String newPsw) {
+        String update = "UPDATE student " +
+                "SET student.Password = \""+ newPsw + "\" WHERE student.Id = \"" + studentID + "\"";
+
+        try {
+            Class.forName(DRIVER);
+            if (con.isClosed()) {
+                System.out.println("Connection is closed...");
+            }
+            Statement statement = con.createStatement();
+            statement.executeUpdate(update);
+
+        } catch (ClassNotFoundException e) {
+            System.out.println("Drive not found, please check...");
+        } catch (SQLException e) {
+            System.out.println(e);
+            System.out.println("Fail to connect to database...");
+        }
+    }
+    public void ChangeAddress(String newAddress) {
+        String update = "UPDATE student " +
+                "SET student.Address = \""+ newAddress + "\" WHERE student.Id = \"" + studentID + "\"";
+
+        try {
+            Class.forName(DRIVER);
+            if (con.isClosed()) {
+                System.out.println("Connection is closed...");
+            }
+            Statement statement = con.createStatement();
+            statement.executeUpdate(update);
+
+        } catch (ClassNotFoundException e) {
+            System.out.println("Drive not found, please check...");
+        } catch (SQLException e) {
+            System.out.println(e);
+            System.out.println("Fail to connect to database...");
+        }
+    }
 
     public void ShowCurrentTime() {
 
@@ -336,9 +473,6 @@ public class DB {
     public void showTable(List<List<String>> list, String[] head) {
         int l = list.size();
         String[][] strs = new String[l][];
-//        System.out.println(list);
-//        System.out.println("==================================");
-//        System.out.println(Arrays.toString(list.toArray()));
 
         for (int i = 0; i < l; i++) {
             int size = list.get(i).size();
@@ -358,7 +492,7 @@ public class DB {
         while (true) {
             switch (state) {
                 case LOGIN:
-                    System.out.print("Please enter your name：");
+                    System.out.print("Please enter your student ID：");
                     String userName = sc.nextLine();
                     System.out.print("Please enter your password：");
                     String password = sc.nextLine();
@@ -394,9 +528,31 @@ public class DB {
                         default: System.out.println("Wrong code, please enter again.");
                     }
                     break;
-                case COURSE:
+
                 case ENROLL:
+                    db.ShowOfferedEnrollCourses();
+                    System.out.print("Please enter the UoSCode to enroll a course/ Enter 'q' to go back: ");
+                    String enrollCourseCode = "";
+                    enrollCourseCode = sc.nextLine();
+                    while (!enrollCourseCode.equals("q")) {
+                        db.Enroll(enrollCourseCode);
+                        System.out.print("Please enter the UoSCode to enroll a course/ Enter 'q' to go back: ");
+                        enrollCourseCode = sc.nextLine();
+                    }
+                    state = State.STUDENTMENU;
+                    break;
                 case WITHDRAW:
+                    db.ShowWithDrawTable();
+                    System.out.print("Please enter the UoSCode to withdraw a course/ Enter 'q' to go back: ");
+                    String withdrawCourseCode = "";
+                    withdrawCourseCode = sc.nextLine();
+                    while (!withdrawCourseCode.equals("q")) {
+                        db.WithDraw(withdrawCourseCode);
+                        System.out.print("Please enter the UoSCode to withdraw a course/ Enter 'q' to go back: ");
+                        withdrawCourseCode = sc.nextLine();
+                    }
+                    state = State.STUDENTMENU;
+                    break;
                 case TRANSCRIPT:
                     db.TranscriptShow();
                     System.out.print("Please enter the UoSCode to view the detail/ Enter 'q' to go back: ");
@@ -411,7 +567,30 @@ public class DB {
                     state = State.STUDENTMENU;
                     break;
                 case PERSONALDETAIL:
-                case PERSONALDETAILS:
+                    db.ShowPersonalDetail();
+                    db.ShowChangePersonalDetailMenu();
+                    System.out.print("Please enter operation code:");
+                    String opCode = "";
+                    opCode = sc.nextLine();
+                    switch (opCode) {
+                        case "1":
+                            System.out.print("Please enter your new password: ");
+                            String newPsw = sc.nextLine();
+                            db.ChangePassword(newPsw);
+                            System.out.println("Change password successfully!");
+                            break;
+                        case "2":
+                            System.out.print("Please enter your new address: ");
+                            String newAddress = sc.nextLine();
+                            db.ChangeAddress(newAddress);
+                            System.out.println("Change address successfully!");
+                            break;
+                        case "3":
+                            state = State.STUDENTMENU;
+                            break;
+                        default: break;
+                    }
+                    break;
                 default:
                     break;
             }
