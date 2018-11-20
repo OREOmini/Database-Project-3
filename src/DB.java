@@ -178,9 +178,7 @@ public class DB {
 
         showTable(list, new String[]{"Course Name"});
     }
-    public void StudentNextOperation() {
 
-    }
     public void TranscriptShow() {
         // same as studentmenu but without year and quarter.
         String uoSCode, courseYear, courseSemester, grade;
@@ -298,22 +296,68 @@ public class DB {
     // the following method need stored procedures.
 
     public void Enroll(String courseCode) {
-        // TODO: enroll constrain
-        String query = "CALL enrollCheck("+studentID+","+courseCode+","+year+","+quarter+")";
+        Scanner sc = new Scanner(System.in);
+        System.out.print("Please enter the year of the course: ");
+        String inputYear = sc.nextLine();
+        System.out.print("Please enter the semester of the course: ");
+        String inputQuarter = sc.nextLine();
+
+        String query = "CALL enrollCheck('"+studentID+"','"+courseCode+"','"+inputYear+"','"+inputQuarter+"', @message, @output);";
+        String query2 = "select @message, @output;";
+//        System.out.printf("query = %s\n", query);
+        int output;
+        String message;
+        try {
+            Class.forName(DRIVER);
+            if (con.isClosed()) {
+                System.out.println("Connection is closed...");
+            }
+            Statement statement = con.createStatement();
+            statement.executeQuery(query);
+            ResultSet resultSet = statement.executeQuery(query2);
+
+            while (resultSet.next()) {
+                output = resultSet.getInt("@output");
+                message = resultSet.getString("@message");
+                if ( output == 1 ) {
+                    System.out.println("---- Enroll successfully ----");
+                }
+                else if ( output == 2){
+                    System.out.println("---- The course you choose doesn't exist ----");
+                }
+                else if ( output == 3 ){
+                    System.out.println("---- Sorry...the course is full ----");
+                }
+                else if ( output == 0 ) {
+                    System.out.printf("You haven't meet the prerequisites of this(these) course(s): %s\n", message);
+
+                }
+                else {
+                    System.out.println("Some error...");
+                }
+            }
+        } catch (ClassNotFoundException e) {
+            System.out.println("Drive not found, please check...");
+        } catch (SQLException e) {
+            System.out.println(e);
+            System.out.println("Fail to connect to database...");
+        }
 
     }
 
     public void ShowOfferedEnrollCourses() {
         List<List<String>> list = new ArrayList<>();
         String uoSCode, courseSemester, courseYear;
-        String query = "SELECT distinct l.UoSCode as UoSCode, l.Semester as Semester, l.Year as Year\n" +
-                "FROM lecture l\n" +
-                "WHERE \n" +
+        String curYear = year, curSemester = quarter;
+        String query = "select uoscode, semester, year from uosoffering u " +
+                "where " +
                 "NOT EXISTS\n" +
                 "(SELECT t.UoSCode, t.Semester, t.Year \n" +
                 "FROM transcript t \n" +
-                "WHERE t.Studid = \"" + studentID + "\" and l.UoSCode = t.UoSCode and" +
-                " l.Semester = t.Semester and l.Year >= +'"+year+"')";
+                "WHERE t.Studid = \"" + studentID + "\" and u.UoSCode = t.UoSCode and" +
+                " u.Semester = t.Semester and u.Year ='"+curYear+"')" + " and " +
+                "year = '"+curYear+"' and semester = '"+curSemester+"' ";
+//        System.out.println(query);
         try {
             Class.forName(DRIVER);
             if (con.isClosed()) {
@@ -334,6 +378,41 @@ public class DB {
                 temp.add(courseSemester);
                 list.add(temp);
             }
+            if ( curSemester == "Q1" ) {
+                curSemester = "Q2";
+                curYear = (Integer.parseInt(curYear) + 1) + "";
+            }
+            else if ( curSemester == "Q4" ){
+                curSemester = "Q1";
+            }
+            else if ( curSemester == "Q3"){
+                curSemester = "Q4";
+            }
+            else {
+                curSemester = "Q3";
+            }
+            query = "select uoscode, semester, year from uosoffering u " +
+                    "where year = '"+curYear+"' and semester = '"+curSemester+"' and " +
+                    "NOT EXISTS\n" +
+                    "(SELECT t.UoSCode, t.Semester, t.Year \n" +
+                    "FROM transcript t \n" +
+                    "WHERE t.Studid = \"" + studentID + "\" and u.UoSCode = t.UoSCode and" +
+                    " u.Semester = t.Semester and u.Year ='"+curYear+"')";
+            resultSet = statement.executeQuery(query);
+            while ( resultSet.next() ) {
+                uoSCode = resultSet.getString("UoSCode");
+                courseYear = resultSet.getString("Year");
+                courseSemester = resultSet.getString("Semester");
+
+                List<String> temp = new ArrayList<>();
+                temp.add(uoSCode);
+                temp.add(courseYear);
+                temp.add(courseSemester);
+                list.add(temp);
+            }
+
+
+
         } catch (ClassNotFoundException e) {
             System.out.println("Drive not found, please check...");
         } catch (SQLException e) {
@@ -347,6 +426,53 @@ public class DB {
     // the following method need stored procedures and triggers.
     public void WithDraw(String courseCode) {
         // TODO: withdraw constrain
+        Scanner sc = new Scanner(System.in);
+        System.out.print("Please enter the year of the course: ");
+        String inputYear = sc.nextLine();
+        System.out.print("Please enter the semester of the course: ");
+        String inputQuarter = sc.nextLine();
+
+        String query = "CALL withdrawCheck('"+studentID+"','"+courseCode+"','"+inputYear+"','"+inputQuarter+"', @message, @output);";
+        String query2 = "select @message, @output;";
+        int output;
+        String message;
+        try {
+            Class.forName(DRIVER);
+            if (con.isClosed()) {
+                System.out.println("Connection is closed...");
+            }
+            Statement statement = con.createStatement();
+            statement.executeQuery(query);
+            ResultSet resultSet = statement.executeQuery(query2);
+
+            while (resultSet.next()) {
+                output = resultSet.getInt("@output");
+                message = resultSet.getString("@message");
+                if ( output == 1 ) {
+                    System.out.println("---- Drop successfully ----");
+                }
+                else if ( output == 0 ) {
+                    System.out.printf("%s\n", message);
+
+                }
+                else {
+                    System.out.println("Some error...");
+                }
+            }
+
+            resultSet = statement.executeQuery("Select @status;");
+            while (resultSet.next()) {
+                String status = resultSet.getString("@status");
+                if (status.equals("below")) {
+                    System.out.println("*** WARNING: The enrollment of this course is below 50% ***");
+                }
+            }
+        } catch (ClassNotFoundException e) {
+            System.out.println("Drive not found, please check...");
+        } catch (SQLException e) {
+            System.out.println(e);
+            System.out.println("Fail to connect to database...");
+        }
     }
     public void ShowWithDrawTable() {
         List<List<String>> list = new ArrayList<>();
@@ -533,8 +659,8 @@ public class DB {
 
                 case ENROLL:
                     db.ShowOfferedEnrollCourses();
-                    System.out.print("Please enter the UoSCode to enroll a course/ Enter 'q' to go back: ");
                     String enrollCourseCode = "";
+                    System.out.print("Please enter the UoSCode to enroll a course/ Enter 'q' to go back: ");
                     enrollCourseCode = sc.nextLine();
                     while (!enrollCourseCode.equals("q")) {
                         db.Enroll(enrollCourseCode);
